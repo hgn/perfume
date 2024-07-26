@@ -44,7 +44,7 @@ clean:
 test-build: $(RELEASE_TARGET)
 	$(CC) $(CFLAGS) -o $(TEST_DIR)/test_perfume $(TEST_DIR)/test_perfume.c -L$(RELEASE_DIR) -lperfume
 
-test: $(RELEASE_TARGET)
+test: test-build
 	$(test-build)
 	LD_LIBRARY_PATH=$(RELEASE_DIR) $(TEST_DIR)/test_perfume
 
