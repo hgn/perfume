@@ -20,6 +20,7 @@
 
 #define	ENABLE_DISABLE_BIT 31
 
+#define SYS_TRACINGFS_PATH "/sys/kernel/tracing"
 #define SYS_USER_EVENTS_DATA_NAME_PATH "/sys/kernel/tracing/user_events_data"
 
 struct perfume_ctx {
@@ -41,6 +42,13 @@ struct perfume_probe {
 	int (*write)(void *ptr, size_t size, ...);
 };
 
+static int is_tracing_tracingfs_rw(void)
+{
+	if (access(SYS_TRACINGFS_PATH, R_OK | W_OK) == 0)
+		return 1;
+	return 0;
+}
+
 static int is_tracing_user_event_rw(void)
 {
 	if (access(SYS_USER_EVENTS_DATA_NAME_PATH, R_OK | W_OK) == 0)
@@ -49,25 +57,31 @@ static int is_tracing_user_event_rw(void)
 }
 
 
-#define PERFUME_CHECK_NO_KERNEL_SUPPORT_STR "no " SYS_USER_EVENTS_DATA_NAME_PATH " found, no kernel support"
+#define PERFUME_CHECK_TRACINGFS_SUPPORT_STR "no " SYS_TRACINGFS_PATH " found, no kernel support"
+#define PERFUME_CHECK_USER_EVENTS_SUPPORT_STR "no " SYS_USER_EVENTS_DATA_NAME_PATH " found, no kernel support"
+
 #define PERFUME_CHECK_OK_STR "no error"
 
 int perfume_check(void)
 {
-    if (!is_tracing_user_event_rw())
-        return PERFUME_CHECK_NO_KERNEL_SUPPORT;
-    return PERFUME_CHECK_OK;
+	if (!is_tracing_tracingfs_rw())
+		return PERFUME_CHECK_TRACINGFS_SUPPORT;
+	if (!is_tracing_user_event_rw())
+		return PERFUME_CHECK_USER_EVENTS_SUPPORT;
+	return PERFUME_CHECK_OK;
 }
 
 const char *perfume_check_str(int error_code)
 {
-    switch (error_code) {
-        case PERFUME_CHECK_NO_KERNEL_SUPPORT:
-            return PERFUME_CHECK_NO_KERNEL_SUPPORT_STR;
-        case PERFUME_CHECK_OK:
-        default:
-            return PERFUME_CHECK_OK_STR;
-    }
+	switch (error_code) {
+		case PERFUME_CHECK_TRACINGFS_SUPPORT:
+			return PERFUME_CHECK_TRACINGFS_SUPPORT_STR;
+		case PERFUME_CHECK_USER_EVENTS_SUPPORT:
+			return PERFUME_CHECK_USER_EVENTS_SUPPORT_STR;
+		case PERFUME_CHECK_OK:
+		default:
+			return PERFUME_CHECK_OK_STR;
+	}
 }
 
 
@@ -258,54 +272,54 @@ static inline void build_command(struct perfume_probe *probe, const char *name, 
 
 int perfume_write_raw(void *ptr, size_t size, ...)
 {
-    va_list args;
-    int i, ret = 0;
-    struct iovec *io = NULL;
-    int io_count;
-    unsigned index;
-    struct perfume_probe *probe;
+	va_list args;
+	int i, ret = 0;
+	struct iovec *io = NULL;
+	int io_count;
+	unsigned index;
+	struct perfume_probe *probe;
 
-    if (!ptr)
-        return -EINVAL;
+	if (!ptr)
+		return -EINVAL;
 
-    probe = container_of(ptr, struct perfume_probe, write);
+	probe = container_of(ptr, struct perfume_probe, write);
 
-    if (!probe->enabled)
-	    return 0;
+	if (!probe->enabled)
+		return 0;
 
-    io_count = 1 + probe->arg_count;
+	io_count = 1 + probe->arg_count;
 
-    io = malloc(io_count * sizeof(struct iovec));
-    if (!io) {
-        ret = -ENOMEM;
-        goto out;
-    }
+	io = malloc(io_count * sizeof(struct iovec));
+	if (!io) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
-    io[0].iov_base = &probe->write_index;
-    io[0].iov_len = sizeof(probe->write_index);
+	io[0].iov_base = &probe->write_index;
+	io[0].iov_len = sizeof(probe->write_index);
 
-    va_start(args, size);
+	va_start(args, size);
 
-    for (i = 0; i < probe->arg_count; i++) {
-        index = 1 + i;
-        void *arg_ptr = va_arg(args, void *);
-        size_t arg_size = va_arg(args, size_t);
-        io[index].iov_base = arg_ptr;
-        io[index].iov_len = arg_size;
-    }
+	for (i = 0; i < probe->arg_count; i++) {
+		index = 1 + i;
+		void *arg_ptr = va_arg(args, void *);
+		size_t arg_size = va_arg(args, size_t);
+		io[index].iov_base = arg_ptr;
+		io[index].iov_len = arg_size;
+	}
 
-    va_end(args);
+	va_end(args);
 
-    ret = writev(probe->ctx->trace_fd, io, io_count);
-    if (ret < 0) {
-	    ret = -EINVAL;
-	    goto free_io;
-    }
+	ret = writev(probe->ctx->trace_fd, io, io_count);
+	if (ret < 0) {
+		ret = -EINVAL;
+		goto free_io;
+	}
 
 free_io:
-    free(io);
+	free(io);
 out:
-    return ret;
+	return ret;
 }
 
 struct perfume_probe *perfume_register(struct perfume_ctx *ctx, const char *name, ...)
@@ -365,52 +379,52 @@ out:
 
 static inline int unregister_event(struct perfume_ctx *ctx, struct perfume_probe *probe)
 {
-    struct user_unreg unreg = { 0 };
+	struct user_unreg unreg = { 0 };
 
-    unreg.size = sizeof(unreg);
-    unreg.disable_bit = ENABLE_DISABLE_BIT;
-    unreg.disable_addr = (__u64)&probe->enabled;
+	unreg.size = sizeof(unreg);
+	unreg.disable_bit = ENABLE_DISABLE_BIT;
+	unreg.disable_addr = (__u64)&probe->enabled;
 
-    if (ioctl(ctx->trace_fd, DIAG_IOCSUNREG, &unreg) == -1) {
-        return -EINVAL;
-    }
+	if (ioctl(ctx->trace_fd, DIAG_IOCSUNREG, &unreg) == -1) {
+		return -EINVAL;
+	}
 
-    return 0;
+	return 0;
 }
 
 
 int perfume_deregister(struct perfume_ctx *ctx, struct perfume_probe *probe)
 {
-    int i, j;
-    size_t new_size;
-    struct perfume_probe **new_probes;
-    int ret;
+	int i, j;
+	size_t new_size;
+	struct perfume_probe **new_probes;
+	int ret;
 
-    if (!ctx || !probe)
-        return -EINVAL;
+	if (!ctx || !probe)
+		return -EINVAL;
 
-    ret = unregister_event(ctx, probe);
-    if (ret)
-        return ret;
+	ret = unregister_event(ctx, probe);
+	if (ret)
+		return ret;
 
-    for (i = 0; i < ctx->probe_count; ++i) {
-        if (ctx->probes[i] == probe) {
-            /* shift to front, fill gap */
-            for (j = i; j < ctx->probe_count - 1; ++j) {
-                ctx->probes[j] = ctx->probes[j + 1];
-            }
-            ctx->probe_count--;
-            new_size = ctx->probe_count * sizeof(struct perfume_probe *);
-            new_probes = realloc(ctx->probes, new_size);
-            if (ctx->probe_count > 0 && !new_probes) {
-                return -ENOBUFS;
-            }
-            ctx->probes = new_probes;
-            free_probe(probe);
-            return 0;
-        }
-    }
-    return -EINVAL;
+	for (i = 0; i < ctx->probe_count; ++i) {
+		if (ctx->probes[i] == probe) {
+			/* shift to front, fill gap */
+			for (j = i; j < ctx->probe_count - 1; ++j) {
+				ctx->probes[j] = ctx->probes[j + 1];
+			}
+			ctx->probe_count--;
+			new_size = ctx->probe_count * sizeof(struct perfume_probe *);
+			new_probes = realloc(ctx->probes, new_size);
+			if (ctx->probe_count > 0 && !new_probes) {
+				return -ENOBUFS;
+			}
+			ctx->probes = new_probes;
+			free_probe(probe);
+			return 0;
+		}
+	}
+	return -EINVAL;
 }
 
 

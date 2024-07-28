@@ -15,13 +15,14 @@ struct perfume_probe;
  */
 enum {
     PERFUME_CHECK_OK = 0,
-    PERFUME_CHECK_NO_KERNEL_SUPPORT,
+    PERFUME_CHECK_TRACINGFS_SUPPORT,
+    PERFUME_CHECK_USER_EVENTS_SUPPORT,
 };
 
 /**
  * @brief Checks if the tracing user event is readable and writable.
  *
- * @return int PERFUME_CHECK_OK if supported, otherwise PERFUME_CHECK_NO_KERNEL_SUPPORT.
+ * @return int PERFUME_CHECK_OK if supported, otherwise PERFUME_CHECK_TRACINGFS_SUPPORT or PERFUME_CHECK_USER_EVENTS_SUPPORT.
  */
 int perfume_check(void);
 
