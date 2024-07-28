@@ -40,7 +40,7 @@ install: $(RELEASE_TARGET)
 	cp $(RELEASE_TARGET) $(LIB_TARGET)
 
 clean:
-	rm -rf $(BUILD_DIR) $(TEST_DIR)/test_perfume
+	rm -rf $(BUILD_DIR) $(TEST_DIR)/test_perfume $(TEST_DIR)/example
 
 test-build: CFLAGS += $(SANITIZE_FLAGS)
 test-build: LDFLAGS += $(SANITIZE_FLAGS)
@@ -51,5 +51,11 @@ test: test-build
 	$(test-build)
 	LD_LIBRARY_PATH=$(RELEASE_DIR) $(TEST_DIR)/test_perfume
 
-.PHONY: all debug release test test-build
+example: $(RELEASE_TARGET)
+	$(CC) $(CFLAGS) -o $(TEST_DIR)/example $(TEST_DIR)/example.c -L$(RELEASE_DIR) -lperfume
+
+example-run: example
+	LD_LIBRARY_PATH=$(RELEASE_DIR) $(TEST_DIR)/example
+
+.PHONY: all debug release test test-build example example-run
 

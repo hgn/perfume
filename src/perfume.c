@@ -20,7 +20,7 @@
 
 #define	ENABLE_DISABLE_BIT 31
 
-static const char sys_user_events_data_name[] = "/sys/kernel/tracing/user_events_data";
+#define SYS_USER_EVENTS_DATA_NAME_PATH "/sys/kernel/tracing/user_events_data"
 
 struct perfume_ctx {
 	int flags;
@@ -43,13 +43,13 @@ struct perfume_probe {
 
 static int is_tracing_user_event_rw(void)
 {
-	if (access(sys_user_events_data_name, R_OK | W_OK) == 0)
+	if (access(SYS_USER_EVENTS_DATA_NAME_PATH, R_OK | W_OK) == 0)
 		return 1;
 	return 0;
 }
 
 
-#define PERFUME_CHECK_NO_KERNEL_SUPPORT_STR "no /sys/kernel/tracing/user_events_data found, no kernel support"
+#define PERFUME_CHECK_NO_KERNEL_SUPPORT_STR "no " SYS_USER_EVENTS_DATA_NAME_PATH " found, no kernel support"
 #define PERFUME_CHECK_OK_STR "no error"
 
 int perfume_check(void)
@@ -82,7 +82,7 @@ struct perfume_ctx *perfume_init(int flags)
 	if (!ctx)
 		goto err;
 
-	ctx->trace_fd = open(sys_user_events_data_name, O_RDWR);
+	ctx->trace_fd = open(SYS_USER_EVENTS_DATA_NAME_PATH, O_RDWR);
 	if (ctx->trace_fd < 0)
 		goto err_free;
 
@@ -126,6 +126,9 @@ int perfume_write(struct perfume_probe *probe, ...)
 	if (!probe)
 		return -EINVAL;
 
+	if (!probe->enabled)
+		return 0;
+
 	io_count = 1 + probe->arg_count;
 
 	io = malloc(io_count * sizeof(struct iovec));
@@ -149,12 +152,10 @@ int perfume_write(struct perfume_probe *probe, ...)
 
 	va_end(args);
 
-	if (probe->enabled) {
-		ret = writev(probe->ctx->trace_fd, io, io_count);
-		if (ret < 0) {
-			ret = -1;
-			goto free_io;
-		}
+	ret = writev(probe->ctx->trace_fd, io, io_count);
+	if (ret < 0) {
+		ret = -EINVAL;
+		goto free_io;
 	}
 
 free_io:
@@ -166,12 +167,14 @@ out:
 
 int perfume_add_probe(struct perfume_ctx *ctx, struct perfume_probe *probe)
 {
+	size_t new_size;
 	struct perfume_probe **new_probes;
 
 	if (!ctx || !probe) {
 		return -EINVAL;
 	}
-	new_probes = realloc(ctx->probes, (ctx->probe_count + 1) * sizeof(struct perfume_probe *));
+	new_size = (ctx->probe_count + 1) * sizeof(struct perfume_probe *);
+	new_probes = realloc(ctx->probes, new_size);
 	if (!new_probes) {
 		return -EINVAL;
 	}
@@ -184,7 +187,9 @@ int perfume_add_probe(struct perfume_ctx *ctx, struct perfume_probe *probe)
 
 static inline struct perfume_probe *allocate_probe(const char *name, size_t command_len)
 {
-	struct perfume_probe *probe = malloc(sizeof(struct perfume_probe));
+	struct perfume_probe *probe;
+
+	probe = malloc(sizeof(struct perfume_probe));
 	if (!probe)
 		return NULL;
 
@@ -219,17 +224,18 @@ static inline int allocate_args(struct perfume_probe *probe, int count)
 
 static inline void free_probe(struct perfume_probe *probe)
 {
-	if (probe) {
-		if (probe->args) {
-			for (int i = 0; i < probe->arg_count; i++) {
-				free(probe->args[i]);
-			}
-			free(probe->args);
+	if (!probe)
+		return;
+
+	if (probe->args) {
+		for (int i = 0; i < probe->arg_count; i++) {
+			free(probe->args[i]);
 		}
-		free(probe->command);
-		free(probe->name);
-		free(probe);
+		free(probe->args);
 	}
+	free(probe->command);
+	free(probe->name);
+	free(probe);
 }
 
 
@@ -249,6 +255,7 @@ static inline void build_command(struct perfume_probe *probe, const char *name, 
 	}
 }
 
+
 int perfume_write_raw(void *ptr, size_t size, ...)
 {
     va_list args;
@@ -262,6 +269,9 @@ int perfume_write_raw(void *ptr, size_t size, ...)
         return -EINVAL;
 
     probe = container_of(ptr, struct perfume_probe, write);
+
+    if (!probe->enabled)
+	    return 0;
 
     io_count = 1 + probe->arg_count;
 
@@ -286,12 +296,10 @@ int perfume_write_raw(void *ptr, size_t size, ...)
 
     va_end(args);
 
-    if (probe->enabled) {
-        ret = writev(probe->ctx->trace_fd, io, io_count);
-        if (ret < 0) {
-            ret = -1;
-            goto free_io;
-        }
+    ret = writev(probe->ctx->trace_fd, io, io_count);
+    if (ret < 0) {
+	    ret = -EINVAL;
+	    goto free_io;
     }
 
 free_io:
