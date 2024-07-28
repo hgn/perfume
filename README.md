@@ -180,7 +180,9 @@ user event and log data from userspace to the kernel's tracing infrastructure.
 
 ## Supported Datatypes:
 
-Here is a markdown list with data types and their corresponding standard C counterparts:
+Here is a list with data types and their corresponding standard C counterparts.
+User events in the registration will accept the former - (hopefully) pointing
+to the correspondig standard datatype (the former is kernel internal defintion).
 
 - `s64`: `int64_t`
 - `u64`: `uint64_t`
