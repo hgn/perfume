@@ -178,6 +178,29 @@ This example demonstrates a simple use case of the Perfume library to create a
 user event and log data from userspace to the kernel's tracing infrastructure.
 
 
+## Supported Datatypes:
+
+Here is a markdown list with data types and their corresponding standard C counterparts:
+
+- `s64`: `int64_t`
+- `u64`: `uint64_t`
+- `s32`: `int32_t`
+- `u32`: `uint32_t`
+- `int`: `int`
+- `unsigned int`: `unsigned int`
+- `s16`: `int16_t`
+- `u16`: `uint16_t`
+- `short`: `short`
+- `unsigned short`: `unsigned short`
+- `s8`: `int8_t`
+- `u8`: `uint8_t`
+- `char`: `char`
+- `unsigned char`: `unsigned char`
+- `char[<size>]`: Array of `char`
+- `unsigned char[<size>]`: Array of `unsigned char`
+- `__data_loc`: `uint32_t`
+- `__rel_loc`: `uint32_t`
+
 ## API Documentation
 
 ### perfume_check

@@ -9,6 +9,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <linux/user_events.h>
 
@@ -44,7 +45,11 @@ struct perfume_probe {
 
 static int is_tracing_tracingfs_rw(void)
 {
-	if (access(SYS_TRACINGFS_PATH, R_OK | W_OK) == 0)
+	struct stat buf;
+	int ret;
+
+	ret = stat(SYS_USER_EVENTS_DATA_NAME_PATH, &buf);
+	if (ret == -1)
 		return 1;
 	return 0;
 }
