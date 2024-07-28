@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -fstack-protector-strong -fPIE -D_FORTIFY_SOURCE=2 -Iinclude
+SANITIZE_FLAGS = -fsanitize=address,undefined -fno-omit-frame-pointer
 LDFLAGS = -Wl,-z,relro,-z,now -shared -fPIC
 SRC_DIR = src
 INCLUDE_DIR = include
@@ -41,6 +42,8 @@ install: $(RELEASE_TARGET)
 clean:
 	rm -rf $(BUILD_DIR) $(TEST_DIR)/test_perfume
 
+test-build: CFLAGS += $(SANITIZE_FLAGS)
+test-build: LDFLAGS += $(SANITIZE_FLAGS)
 test-build: $(RELEASE_TARGET)
 	$(CC) $(CFLAGS) -o $(TEST_DIR)/test_perfume $(TEST_DIR)/test_perfume.c -L$(RELEASE_DIR) -lperfume
 
