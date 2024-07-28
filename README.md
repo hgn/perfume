@@ -1,9 +1,11 @@
 # Perfume Library - PERF U(ser) (M) E(events)
 
-The "perfume" library provides a mechanism for registering, writing, and
-managing *user events* in a Linux environment, facilitating detailed
-performance monitoring and debugging. These events can be consumed by third
-party tools like perf or ftrace.
+The "perfume" library offers an accessible interface for registering, writing,
+and managing *user events* within a Linux environment, enabling detailed
+performance monitoring and debugging. These user events can be seamlessly
+integrated and consumed by third-party tools such as perf or ftrace. The
+library aims to simplify the complex kernel interface, providing an
+easy-to-integrate solution for developers.
 
 ## Introduction to Linux User Events
 
@@ -21,16 +23,18 @@ tracing methods:
   tools like `cat` with BusyBox can be used to consume these events.
 - **Dynamic Management**: Unlike User Statically Defined Tracing (USDT), user
   events are highly dynamic, allowing for registration and deregistration at
-  runtime.
+  runtime. Not limited to low level C, C++ or Rust - even Python, Go and other
+  high level languages can easily interact with user events.
 - **Listener Awareness**: Userspace applications can detect if third-party
   tools are registered to consume the events. If no listeners are present,
   calls to `perfume_write()` are ignored, significantly reducing overhead.
 - **Static Data Signature**: Each user event has a static data signature,
   similar to kernel tracepoints, ensuring consistent data parameters for each
   event. Parameters cannot be changed after the registration phase
-  (`perfume_register()`).
+  (`perfume_register()`). Meaning a registration with a dedicated signature is
+  required for each user event tracepoint.
 - **System Limits**: Currently, a maximum of 32,000 user events are allowed on
-  a single system.
+  a single system, this should be enough for anybody.
 
 This mechanism enhances performance monitoring and debugging capabilities for
 user-space applications, making them more efficient and versatile.
