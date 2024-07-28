@@ -362,9 +362,7 @@ struct perfume_probe *perfume_register(struct perfume_ctx *ctx, const char *name
 	reg.enable_addr = (__u64)&probe->enabled;
 	reg.name_args = (__u64)probe->command;
 
-	printf("command: %s\n", probe->command);
 	if (ioctl(ctx->trace_fd, DIAG_IOCSREG, &reg) == -1) {
-		printf("ioctl failed\n");
 		ret = -EINVAL;
 		goto free_probe;
 	}
