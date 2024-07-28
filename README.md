@@ -1,10 +1,10 @@
 # Perfume Library - PERF U(ser) (M) E(events)
 
-The "perfume" library offers an accessible interface for registering, writing,
-and managing *user events* within a Linux environment, enabling detailed
-performance monitoring and debugging. These user events can be seamlessly
-integrated and consumed by third-party tools such as perf or ftrace. The
-library aims to simplify the complex kernel interface, providing an
+The "perfume" library offers an unassumingly accessible interface for
+registering, writing, and managing *user events* within a Linux environment,
+enabling detailed performance monitoring and debugging. These user events can
+be seamlessly integrated and consumed by third-party tools such as perf or
+ftrace. The library aims to simplify the complex kernel interface, providing an
 easy-to-integrate solution for developers.
 
 ## Introduction to Linux User Events
@@ -32,7 +32,9 @@ tracing methods:
   similar to kernel tracepoints, ensuring consistent data parameters for each
   event. Parameters cannot be changed after the registration phase
   (`perfume_register()`). Meaning a registration with a dedicated signature is
-  required for each user event tracepoint.
+  required for each user event tracepoint. (Info: `USER_EVENT_REG_MULTI_FORMAT`
+  may support different formats, but has other drawbacks as name unambiguously.
+  It is currently not supported by `perfume`).
 - **System Limits**: Currently, a maximum of 32,000 user events are allowed on
   a single system, this should be enough for anybody.
 
