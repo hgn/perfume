@@ -41,17 +41,20 @@ user-space applications, making them more efficient and versatile.
 
 ## Overview
 
-Perfume is a C library with C++ support for setting probe points in your
-application. It is released under the Public Domain (SPDX Identifier: CC0-1.0).
+Perfume is a C library, with C++ support, designed for setting probe points in
+your application. Released under the Public Domain (SPDX Identifier: CC0-1.0),
+it has no dependencies beyond the standard C/C++ libraries.
 
-There are no C/C++ dependencies, except the standard library.
+To utilize *user events*, ensure your kernel is compiled with
+`CONFIG_USER_EVENTS=y`. Verify support by checking for the existence of
+`/sys/kernel/tracing/user_events_status`. Note that tracefs may be mounted at a
+different path.
 
-To use *user events* the kernel must be compiled with support:
-`CONFIG_USER_EVENTS=y`. Support can be checked by checking for file
-`/sys/kernel/tracing/user_events_status`. Please note that tracefs may be
-mounted at a different path.
-
-
+Perfume simplifies the process of registering, writing, and managing user
+events in a Linux environment, facilitating detailed performance monitoring and
+debugging. These events can be consumed by tools like perf or ftrace, bridging
+the gap between the complex kernel interface and an easy-to-integrate solution
+for developers.
 
 ## Installation
 
@@ -127,6 +130,10 @@ int main() {
 	return 0;
 }
 ```
+
+> **NOTE:** as of writing, naming user events with ".", "-", ":" will crash
+> perf. So if you want to build an hierarchy, please use "_" for now. E.g.:
+> `root_component_subcomponent` and so on.
 
 ### Step 3: Compile the Program
 
