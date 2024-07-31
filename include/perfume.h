@@ -93,6 +93,14 @@ int perfume_deregister(struct perfume_ctx *ctx, struct perfume_probe *probe);
  */
 int perfume_write(struct perfume_probe *probe, ...);
 
+/**
+ * @brief Check if a particular probe has active listener
+ *
+ * @param probe Pointer to the perfume probe.
+ * @return int positive number if, 0 if not, negaive for error
+ */
+int perfume_probe_enabled(struct perfume_probe *probe);
+
 #ifdef __cplusplus
 }
 #endif

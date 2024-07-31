@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -ggdb -Wextra -Werror -fstack-protector-strong -fPIE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -Iinclude \
-         -Wformat -Wformat-security -fstack-clash-protection -fcf-protection
+         -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -falign-functions=32 -fdiagnostics-color=always -frecord-gcc-switches -pipe
+# used for the (unit) test target
 SANITIZE_FLAGS = -fsanitize=address,undefined -fno-omit-frame-pointer
 LDFLAGS = -Wl,-z,relro,-z,now -Wl,-z,noexecstack -shared -fPIC
 SRC_DIR = src

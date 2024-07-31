@@ -446,3 +446,15 @@ void perfume_probe_free(struct perfume_probe *probe)
 	free(probe->args);
 	free(probe);
 }
+
+
+int perfume_probe_enabled(struct perfume_probe *probe)
+{
+	if (!probe)
+		return -EINVAL;
+
+	if (!probe->enabled)
+		return 0;
+
+	return 1;
+}
